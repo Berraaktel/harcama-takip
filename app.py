@@ -1,7 +1,42 @@
-# harcama-takip v0.3 — liste ve sözlüklerle veri modelleme
+# harcama-takip v0.4 — OOP: Expense ve ExpenseTracker sınıfları
+
+class Expense:
+    def __init__(self, isim, fiyat, kategori):
+        self.isim = isim
+        self.fiyat = fiyat
+        self.kategori = kategori
+
+    def __str__(self):
+        return f"{self.isim}: {self.fiyat:.2f} TL ({self.kategori})"
+
+
+class ExpenseTracker:
+    def __init__(self):
+        self.harcamalar = []  # Expense nesnelerini tutan liste
+
+    def add_expense(self, expense):
+        self.harcamalar.append(expense)
+
+    def total(self):
+        return sum(e.fiyat for e in self.harcamalar)
+
+    def en_pahali(self):
+        en_yuksek = self.harcamalar[0]
+        for e in self.harcamalar:
+            if e.fiyat > en_yuksek.fiyat:
+                en_yuksek = e
+        return en_yuksek
+
+    def summary_by_category(self):
+        kategoriler = {e.kategori for e in self.harcamalar}
+        sonuc = {}
+        for kat in kategoriler:
+            sonuc[kat] = sum(e.fiyat for e in self.harcamalar if e.kategori == kat)
+        return sonuc
+
 
 def kdv_ekle(fiyat, kategori):
-    if kategori == "gida":
+    if kategori == "gıda":
         oran = 0.01
     elif kategori == "elektronik":
         oran = 0.20
@@ -10,7 +45,7 @@ def kdv_ekle(fiyat, kategori):
     return fiyat + (fiyat * oran)
 
 
-harcamalar = []  # her eleman bir dict olacak: {"isim":..., "fiyat":..., "kategori":...}
+tracker = ExpenseTracker()
 
 while True:
     devam = input("Ürün eklemek ister misin? (e/h): ")
@@ -19,35 +54,21 @@ while True:
 
     urun_adi = input("Ürün adı: ")
     fiyat = float(input("Fiyat (TL): "))
-    kategori = input("Kategori (gida/elektronik/diger): ")
+    kategori = input("Kategori (gıda/elektronik/diger): ")
 
     fiyat_kdvli = kdv_ekle(fiyat, kategori)
+    yeni_harcama = Expense(urun_adi, fiyat_kdvli, kategori)
+    tracker.add_expense(yeni_harcama)
 
-    harcama = {"isim": urun_adi, "fiyat": fiyat_kdvli, "kategori": kategori}
-    harcamalar.append(harcama)
+    print(f"{yeni_harcama}\n")
 
-    print(f"{urun_adi} eklendi: {fiyat_kdvli:.2f} TL\n")
-
-if len(harcamalar) == 0:
+if len(tracker.harcamalar) == 0:
     print("Hiç harcama eklenmedi.")
 else:
-    # list comprehension: her harcamanın fiyatını tek listede topla
-    tum_fiyatlar = [h["fiyat"] for h in harcamalar]
-    genel_toplam = sum(tum_fiyatlar)
-
-    # en pahalı harcamayı bul
-    en_pahali = harcamalar[0]
-    for h in harcamalar:
-        if h["fiyat"] > en_pahali["fiyat"]:
-            en_pahali = h
-
     print("--- Özet ---")
-    print(f"Toplam {len(harcamalar)} ürün, genel toplam: {genel_toplam:.2f} TL")
-    print(f"En pahalı: {en_pahali['isim']} ({en_pahali['fiyat']:.2f} TL)")
+    print(f"Toplam {len(tracker.harcamalar)} ürün, genel toplam: {tracker.total():.2f} TL")
+    print(f"En pahalı: {tracker.en_pahali()}")
 
-    # set comprehension: tekrarsız kategori listesi
-    kategoriler = {h["kategori"] for h in harcamalar}
     print("\nKategoriye göre toplam:")
-    for kat in kategoriler:
-        kat_toplam = sum(h["fiyat"] for h in harcamalar if h["kategori"] == kat)
-        print(f"  {kat}: {kat_toplam:.2f} TL")
+    for kat, toplam in tracker.summary_by_category().items():
+        print(f"  {kat}: {toplam:.2f} TL")
