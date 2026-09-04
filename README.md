@@ -10,6 +10,7 @@ Kişisel harcamaları takip eden, terminal üzerinden çalışan basit bir Pytho
 - Toplam, en pahalı ürün ve kategoriye göre özet gösterme
 - Hatalı girdilerde (harf, negatif sayı) çökmeden uyarı verme
 - `pytest` ile yazılmış birim testleri
+- Döviz kuru API entegrasyonu (Frankfurter API üzerinden TRY→USD/EUR)
 
 ## Kurulum ve çalıştırma
 
@@ -18,7 +19,7 @@ git clone https://github.com/Berraaktel/harcama-takip.git
 cd harcama-takip
 python3 -m venv venv
 source venv/bin/activate
-pip install pytest
+pip install -r requirements.txt
 python3 app.py
 \`\`\`
 
@@ -55,3 +56,4 @@ Python 3, `json`, `pytest`
 - v0.4 — OOP: Expense ve ExpenseTracker sınıfları
 - v0.5 — JSON kalıcılık ve hata yönetimi
 - v0.6 — pytest testleri ve dokümantasyon
+- v1.0 — requests kütüphanesiyle gerçek zamanlı döviz kuru API entegrasyonu (Frankfurter API), kategori girişi validasyonu, requirements.txt eklendi

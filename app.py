@@ -1,9 +1,9 @@
-# harcama-takip v0.6 — pytest ile test edilebilir hale getirme
+# harcama-takip v1.0 — gercek API entegrasyonu (doviz kuru)
 
 import json
+import requests
 
 DOSYA_ADI = "harcamalar.json"
-
 
 class Expense:
     def __init__(self, isim, fiyat, kategori):
@@ -16,7 +16,6 @@ class Expense:
 
     def to_dict(self):
         return {"isim": self.isim, "fiyat": self.fiyat, "kategori": self.kategori}
-
 
 class ExpenseTracker:
     def __init__(self):
@@ -56,7 +55,6 @@ class ExpenseTracker:
         except FileNotFoundError:
             pass
 
-
 def kdv_ekle(fiyat, kategori):
     if kategori == "gıda":
         oran = 0.01
@@ -66,6 +64,17 @@ def kdv_ekle(fiyat, kategori):
         oran = 0.20
     return fiyat + (fiyat * oran)
 
+def kur_bilgisi_al():
+    try:
+        yanit = requests.get(
+            "https://api.frankfurter.app/latest?from=TRY&to=USD,EUR",
+            timeout=5
+        )
+        yanit.raise_for_status()
+        veri = yanit.json()
+        return veri["rates"]
+    except requests.exceptions.RequestException:
+        return None
 
 def main():
     tracker = ExpenseTracker()
@@ -91,7 +100,11 @@ def main():
             print("Fiyat negatif olamaz, tekrar dene.\n")
             continue
 
+        gecerli_kategoriler = ["gıda", "elektronik", "diger"]
         kategori = input("Kategori (gıda/elektronik/diger): ")
+        if kategori not in gecerli_kategoriler:
+            print("Geçersiz kategori. Lütfen gıda, elektronik veya diger yaz.\n")
+            continue
 
         fiyat_kdvli = kdv_ekle(fiyat, kategori)
         yeni_harcama = Expense(urun_adi, fiyat_kdvli, kategori)
@@ -112,6 +125,14 @@ def main():
         for kat, toplam in tracker.summary_by_category().items():
             print(f"  {kat}: {toplam:.2f} TL")
 
+        kurlar = kur_bilgisi_al()
+        if kurlar:
+            toplam_tl = tracker.total()
+            print(f"\nGüncel kurla karşılığı:")
+            print(f"  {toplam_tl * kurlar['USD']:.2f} USD")
+            print(f"  {toplam_tl * kurlar['EUR']:.2f} EUR")
+        else:
+            print("\nDöviz kuru bilgisine şu an ulaşılamadı (internet yok ya da API cevap vermedi).")
 
 if __name__ == "__main__":
     main()
