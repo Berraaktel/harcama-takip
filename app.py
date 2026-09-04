@@ -1,4 +1,4 @@
-# harcama-takip v0.5 — JSON kalıcılık ve hata yönetimi
+# harcama-takip v0.6 — pytest ile test edilebilir hale getirme
 
 import json
 
@@ -54,7 +54,7 @@ class ExpenseTracker:
                 for kayit in veri:
                     self.harcamalar.append(Expense(kayit["isim"], kayit["fiyat"], kayit["kategori"]))
         except FileNotFoundError:
-            pass  # dosya hiç yoksa (ilk çalıştırma), boş başla, hata verme
+            pass
 
 
 def kdv_ekle(fiyat, kategori):
@@ -67,46 +67,51 @@ def kdv_ekle(fiyat, kategori):
     return fiyat + (fiyat * oran)
 
 
-tracker = ExpenseTracker()
-tracker.yukle()
+def main():
+    tracker = ExpenseTracker()
+    tracker.yukle()
 
-if tracker.harcamalar:
-    print(f"Önceki kayıtlardan {len(tracker.harcamalar)} harcama yüklendi.\n")
+    if tracker.harcamalar:
+        print(f"Önceki kayıtlardan {len(tracker.harcamalar)} harcama yüklendi.\n")
 
-while True:
-    devam = input("Ürün eklemek ister misin? (e/h): ")
-    if devam == "h":
-        break
+    while True:
+        devam = input("Ürün eklemek ister misin? (e/h): ")
+        if devam == "h":
+            break
 
-    urun_adi = input("Ürün adı: ")
+        urun_adi = input("Ürün adı: ")
 
-    try:
-        fiyat = float(input("Fiyat (TL): "))
-    except ValueError:
-        print("Geçersiz fiyat, sayı girmen lazım. Tekrar dene.\n")
-        continue
+        try:
+            fiyat = float(input("Fiyat (TL): "))
+        except ValueError:
+            print("Geçersiz fiyat, sayı girmen lazım. Tekrar dene.\n")
+            continue
 
-    if fiyat < 0:
-        print("Fiyat negatif olamaz, tekrar dene.\n")
-        continue
+        if fiyat < 0:
+            print("Fiyat negatif olamaz, tekrar dene.\n")
+            continue
 
-    kategori = input("Kategori (gıda/elektronik/diger): ")
+        kategori = input("Kategori (gıda/elektronik/diger): ")
 
-    fiyat_kdvli = kdv_ekle(fiyat, kategori)
-    yeni_harcama = Expense(urun_adi, fiyat_kdvli, kategori)
-    tracker.add_expense(yeni_harcama)
+        fiyat_kdvli = kdv_ekle(fiyat, kategori)
+        yeni_harcama = Expense(urun_adi, fiyat_kdvli, kategori)
+        tracker.add_expense(yeni_harcama)
 
-    print(f"{yeni_harcama}\n")
+        print(f"{yeni_harcama}\n")
 
-tracker.kaydet()
+    tracker.kaydet()
 
-if len(tracker.harcamalar) == 0:
-    print("Hiç harcama eklenmedi.")
-else:
-    print("--- Özet ---")
-    print(f"Toplam {len(tracker.harcamalar)} ürün, genel toplam: {tracker.total():.2f} TL")
-    print(f"En pahalı: {tracker.en_pahali()}")
+    if len(tracker.harcamalar) == 0:
+        print("Hiç harcama eklenmedi.")
+    else:
+        print("--- Özet ---")
+        print(f"Toplam {len(tracker.harcamalar)} ürün, genel toplam: {tracker.total():.2f} TL")
+        print(f"En pahalı: {tracker.en_pahali()}")
 
-    print("\nKategoriye göre toplam:")
-    for kat, toplam in tracker.summary_by_category().items():
-        print(f"  {kat}: {toplam:.2f} TL")
+        print("\nKategoriye göre toplam:")
+        for kat, toplam in tracker.summary_by_category().items():
+            print(f"  {kat}: {toplam:.2f} TL")
+
+
+if __name__ == "__main__":
+    main()
