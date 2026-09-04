@@ -39,6 +39,13 @@ class ExpenseTracker:
                 en_yuksek = e
         return en_yuksek
 
+    def en_ucuz(self):
+        en_dusuk = self.harcamalar[0]
+        for e in self.harcamalar:
+            if e.fiyat < en_dusuk.fiyat:
+                en_dusuk = e
+        return en_dusuk
+
     def summary_by_category(self):
         kategoriler = {e.kategori for e in self.harcamalar}
         sonuc = {}
@@ -181,6 +188,7 @@ def main():
         print("--- Özet ---")
         print(f"Toplam {len(tracker.harcamalar)} ürün, genel toplam: {tracker.total():.2f} TL")
         print(f"En pahalı: {tracker.en_pahali()}")
+        print(f"En ucuz: {tracker.en_ucuz()}")
 
         print("\nKategoriye göre toplam:")
         for kat, toplam in tracker.summary_by_category().items():
