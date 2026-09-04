@@ -25,3 +25,11 @@ def test_kdv_ekle_gida():
 
 def test_kdv_ekle_bilinmeyen_kategori():
     assert kdv_ekle(100, "kozmetik") == 120.0
+
+
+def test_en_ucuz():
+    tracker = ExpenseTracker()
+    tracker.add_expense(Expense("kalem", 100, "kirtasiye"))
+    tracker.add_expense(Expense("defter", 50, "kirtasiye"))
+    tracker.add_expense(Expense("silgi", 20, "kirtasiye"))
+    assert tracker.en_ucuz().isim == "silgi"
