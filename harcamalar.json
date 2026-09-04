@@ -1,0 +1,12 @@
+[
+  {
+    "isim": "tel",
+    "fiyat": 240.0,
+    "kategori": "elektronik"
+  },
+  {
+    "isim": "muz",
+    "fiyat": 303.0,
+    "kategori": "gıda"
+  }
+]

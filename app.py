@@ -1,4 +1,9 @@
-# harcama-takip v0.4 — OOP: Expense ve ExpenseTracker sınıfları
+# harcama-takip v0.5 — JSON kalıcılık ve hata yönetimi
+
+import json
+
+DOSYA_ADI = "harcamalar.json"
+
 
 class Expense:
     def __init__(self, isim, fiyat, kategori):
@@ -9,10 +14,13 @@ class Expense:
     def __str__(self):
         return f"{self.isim}: {self.fiyat:.2f} TL ({self.kategori})"
 
+    def to_dict(self):
+        return {"isim": self.isim, "fiyat": self.fiyat, "kategori": self.kategori}
+
 
 class ExpenseTracker:
     def __init__(self):
-        self.harcamalar = []  # Expense nesnelerini tutan liste
+        self.harcamalar = []
 
     def add_expense(self, expense):
         self.harcamalar.append(expense)
@@ -34,6 +42,20 @@ class ExpenseTracker:
             sonuc[kat] = sum(e.fiyat for e in self.harcamalar if e.kategori == kat)
         return sonuc
 
+    def kaydet(self):
+        veri = [e.to_dict() for e in self.harcamalar]
+        with open(DOSYA_ADI, "w") as dosya:
+            json.dump(veri, dosya, ensure_ascii=False, indent=2)
+
+    def yukle(self):
+        try:
+            with open(DOSYA_ADI, "r") as dosya:
+                veri = json.load(dosya)
+                for kayit in veri:
+                    self.harcamalar.append(Expense(kayit["isim"], kayit["fiyat"], kayit["kategori"]))
+        except FileNotFoundError:
+            pass  # dosya hiç yoksa (ilk çalıştırma), boş başla, hata verme
+
 
 def kdv_ekle(fiyat, kategori):
     if kategori == "gıda":
@@ -46,6 +68,10 @@ def kdv_ekle(fiyat, kategori):
 
 
 tracker = ExpenseTracker()
+tracker.yukle()
+
+if tracker.harcamalar:
+    print(f"Önceki kayıtlardan {len(tracker.harcamalar)} harcama yüklendi.\n")
 
 while True:
     devam = input("Ürün eklemek ister misin? (e/h): ")
@@ -53,7 +79,17 @@ while True:
         break
 
     urun_adi = input("Ürün adı: ")
-    fiyat = float(input("Fiyat (TL): "))
+
+    try:
+        fiyat = float(input("Fiyat (TL): "))
+    except ValueError:
+        print("Geçersiz fiyat, sayı girmen lazım. Tekrar dene.\n")
+        continue
+
+    if fiyat < 0:
+        print("Fiyat negatif olamaz, tekrar dene.\n")
+        continue
+
     kategori = input("Kategori (gıda/elektronik/diger): ")
 
     fiyat_kdvli = kdv_ekle(fiyat, kategori)
@@ -61,6 +97,8 @@ while True:
     tracker.add_expense(yeni_harcama)
 
     print(f"{yeni_harcama}\n")
+
+tracker.kaydet()
 
 if len(tracker.harcamalar) == 0:
     print("Hiç harcama eklenmedi.")
