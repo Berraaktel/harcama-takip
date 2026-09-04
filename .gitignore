@@ -1,0 +1,6 @@
+harcamalar.json
+test.json
+__pycache__/
+.DS_Store
+venv/
+.pytest_cache/
