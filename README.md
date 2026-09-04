@@ -11,6 +11,7 @@ Kişisel harcamaları takip eden, terminal üzerinden çalışan basit bir Pytho
 - Hatalı girdilerde (harf, negatif sayı) çökmeden uyarı verme
 - `pytest` ile yazılmış birim testleri
 - Döviz kuru API entegrasyonu (Frankfurter API üzerinden TRY→USD/EUR)
+- AI destekli doğal dil ile harcama girişi (Groq API, Llama 3.1)
 
 ## Kurulum ve çalıştırma
 
@@ -22,6 +23,8 @@ source venv/bin/activate
 pip install -r requirements.txt
 python3 app.py
 \`\`\`
+
+AI destekli girişi kullanmak için `.env` dosyasi olusturup GROQ_API_KEY=... satirini eklemen gerekiyor (ucretsiz key: console.groq.com)
 
 ## Örnek kullanım
 
@@ -57,3 +60,4 @@ Python 3, `json`, `pytest`
 - v0.5 — JSON kalıcılık ve hata yönetimi
 - v0.6 — pytest testleri ve dokümantasyon
 - v1.0 — requests kütüphanesiyle gerçek zamanlı döviz kuru API entegrasyonu (Frankfurter API), kategori girişi validasyonu, requirements.txt eklendi
+- v1.1 — AI destekli dogal dil girisi (Groq API entegrasyonu)

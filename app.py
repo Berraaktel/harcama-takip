@@ -1,4 +1,9 @@
-# harcama-takip v1.0 — gercek API entegrasyonu (doviz kuru)
+# harcama-takip v1.1 — AI destekli dogal dil girisi (Groq API)
+
+from dotenv import load_dotenv
+import os
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 import json
 import requests
@@ -76,6 +81,67 @@ def kur_bilgisi_al():
     except requests.exceptions.RequestException:
         return None
 
+def ai_ile_harcama_cikar(cumle):
+    if not GROQ_API_KEY:
+        return None
+    try:
+        yanit = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            json={
+                "model": "openai/gpt-oss-20b",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Kullanicinin yazdigi harcama cumlesinden urun adi, fiyat (sadece sayi, TL) ve kategori (gıda, elektronik veya diger) cikar. SADECE gecerli JSON dondur, baska hicbir aciklama ekleme. Format: {\"isim\": \"...\", \"fiyat\": 0.0, \"kategori\": \"...\"}"
+                    },
+                    {"role": "user", "content": cumle}
+                ],
+                "temperature": 0
+            },
+            timeout=10
+        )
+        yanit.raise_for_status()
+        icerik = yanit.json()["choices"][0]["message"]["content"]
+        veri = json.loads(icerik)
+        if "isim" not in veri or "fiyat" not in veri or "kategori" not in veri:
+            return None
+        return veri
+    except (requests.exceptions.RequestException, KeyError, json.JSONDecodeError, ValueError):
+        return None
+
+def manuel_giris():
+    urun_adi = input("Ürün adı: ")
+
+    try:
+        fiyat = float(input("Fiyat (TL): "))
+    except ValueError:
+        print("Geçersiz fiyat, sayı girmen lazım. Tekrar dene.\n")
+        return None
+
+    if fiyat < 0:
+        print("Fiyat negatif olamaz, tekrar dene.\n")
+        return None
+
+    gecerli_kategoriler = ["gıda", "elektronik", "diger"]
+    kategori = input("Kategori (gıda/elektronik/diger): ")
+    if kategori not in gecerli_kategoriler:
+        print("Geçersiz kategori. Lütfen gıda, elektronik veya diger yaz.\n")
+        return None
+
+    return urun_adi, fiyat, kategori
+
+def ai_giris():
+    cumle = input("Ne aldığını anlat: ")
+    veri = ai_ile_harcama_cikar(cumle)
+    if veri is None:
+        print("AI ile çıkarılamadı, elle giriş yapalım.\n")
+        return None
+
+    gecerli_kategoriler = ["gıda", "elektronik", "diger"]
+    kategori = veri["kategori"] if veri["kategori"] in gecerli_kategoriler else "diger"
+    return veri["isim"], veri["fiyat"], kategori
+
 def main():
     tracker = ExpenseTracker()
     tracker.yukle()
@@ -88,24 +154,19 @@ def main():
         if devam == "h":
             break
 
-        urun_adi = input("Ürün adı: ")
+        secim = input("Nasıl eklemek istersin? (1) Elle gir (2) Cümleyle anlat (AI): ")
 
-        try:
-            fiyat = float(input("Fiyat (TL): "))
-        except ValueError:
-            print("Geçersiz fiyat, sayı girmen lazım. Tekrar dene.\n")
+        if secim == "2":
+            sonuc = ai_giris()
+            if sonuc is None:
+                sonuc = manuel_giris()
+        else:
+            sonuc = manuel_giris()
+
+        if sonuc is None:
             continue
 
-        if fiyat < 0:
-            print("Fiyat negatif olamaz, tekrar dene.\n")
-            continue
-
-        gecerli_kategoriler = ["gıda", "elektronik", "diger"]
-        kategori = input("Kategori (gıda/elektronik/diger): ")
-        if kategori not in gecerli_kategoriler:
-            print("Geçersiz kategori. Lütfen gıda, elektronik veya diger yaz.\n")
-            continue
-
+        urun_adi, fiyat, kategori = sonuc
         fiyat_kdvli = kdv_ekle(fiyat, kategori)
         yeni_harcama = Expense(urun_adi, fiyat_kdvli, kategori)
         tracker.add_expense(yeni_harcama)
